@@ -83,7 +83,7 @@ public class BloomFilter {
         }
 
     }
-    public String rejectedPasswordsAmount(String filePath){
+    public String getRejectedPasswordsAmount(String filePath){
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             String str;
