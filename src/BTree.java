@@ -30,6 +30,19 @@ public class BTree{
         return root.getValues()[0]+"_0, "+root.inOrder(0);
     }
 
+    public String getSearchTime(String txt){
+        return null;
+    }
+
+    public  void createFullTree(String target){
+
+    }
+
+    public void  deleteKeysFromTree(String target){
+
+    }
+
+
 
 
 }

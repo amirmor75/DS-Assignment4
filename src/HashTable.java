@@ -44,4 +44,8 @@ public class HashTable {
     public boolean contains(int key){
         return table[hashFunction(key)].contains(key);
     }
+
+    public String getSearchTime(String txt) {
+        return super.toString();
+    }
 }
