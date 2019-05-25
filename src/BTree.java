@@ -30,9 +30,12 @@ public class BTree{
     }
 
     public String inOrder(){
+        String inOrder="";
         if (root.getValues()[0]!=null)
-            return root.inOrder(0);
-        return "";
+            inOrder= root.inOrder(0);
+        if (inOrder.length()>0&inOrder.charAt(inOrder.length()-1)==',')
+            inOrder=inOrder.substring(0,inOrder.length()-1);
+        return inOrder;
     }
 
     public int getHeight(){

@@ -95,11 +95,11 @@ public class BTreeNode{
     public String inOrder(int depth){
         String result = "";
         for (int i=0;i<numOfKeys;i=i+1){
+            if (children[i]!=null)
+                result=result+children[i].inOrder(depth+1);
             result=result+values[i]+"_"+depth+",";
-            for (int j=0;j<children.length;j=j+1){
-                if (children[j]!=null) {
-                    result=result+children[j].inOrder(depth+1);
-                }
+            if(i==numOfKeys-1&&children[i+1]!=null) {
+                result = result + children[i + 1].inOrder(depth + 1);
             }
         }
         return result;
