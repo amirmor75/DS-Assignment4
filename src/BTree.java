@@ -36,7 +36,7 @@ public class BTree{
     }
 
     public String getSearchTime(String filePath){
-        long start=System.currentTimeMillis();
+        double start=System.nanoTime()/1000000.0;
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             String str;
@@ -47,10 +47,10 @@ public class BTree{
         catch (Exception e){
             System.out.println(e.getMessage());
         }
-        long end=System.currentTimeMillis();
+        double end=System.nanoTime()/1000000.0;
         String output=String.valueOf(end-start);
         int indexOfDot=output.indexOf('.');
-        output=output.substring(0,indexOfDot+4);
+        output=output.substring(0,indexOfDot+5);
         return output;
     }
 
