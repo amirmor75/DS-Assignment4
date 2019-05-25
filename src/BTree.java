@@ -31,8 +31,14 @@ public class BTree{
 
     public String inOrder(){
         if (root.getValues()[0]!=null)
-            return root.getValues()[0]+"_0, "+root.inOrder(0);
+            return root.inOrder(0);
         return "";
+    }
+
+    public int getHeight(){
+        if (root.getChildren()[0]==null)
+            return 0;
+        else return root.getHeight();
     }
 
     public void delete(String element,BTreeNode root){

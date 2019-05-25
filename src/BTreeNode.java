@@ -67,7 +67,7 @@ public class BTreeNode{
     public void insertNonFull(String element){
         int i=numOfKeys-1;
         if (isLeaf()){
-            while (i>=0&element.compareTo(values[i])<0){
+            while (i>=0&&element.compareTo(values[i])<0){
                 values[i+1]=values[i];
                 i=i-1;
             }
@@ -86,12 +86,21 @@ public class BTreeNode{
             children[i].insertNonFull(element);
         }
     }
+    public int getHeight(){
+        if (children[0]!=null)
+            return 1+children[0].getHeight();
+        return 1;
+    }
 
     public String inOrder(int depth){
         String result = "";
-        for (int i=1;i<numOfKeys;i=i+1){
+        for (int i=0;i<numOfKeys;i=i+1){
             result=result+values[i]+"_"+depth+",";
-            result=result+children[i].inOrder(depth+1);
+            for (int j=0;j<children.length;j=j+1){
+                if (children[j]!=null) {
+                    result=result+children[j].inOrder(depth+1);
+                }
+            }
         }
         return result;
     }
