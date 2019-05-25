@@ -29,6 +29,7 @@ public class BTreeNode{
         }
         else return children[i].search(element);
     }
+
     public  boolean isLeaf(){
 
         for (BTreeNode bt : children){
@@ -37,6 +38,7 @@ public class BTreeNode{
         }
         return true;
     }
+
 
     public void splitChild(int i){ //split the i'th child, meaning the i-1 in the array
         BTreeNode y=this.children[i-1]; //the one we want to split
