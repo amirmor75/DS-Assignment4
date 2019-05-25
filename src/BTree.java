@@ -1,23 +1,35 @@
-public class BTree<String>{
+public class BTree{
 
     private int t;
-    BTreeNode<String> root;
+    BTreeNode root;
 
-    public BTree(int t){
-        this.t=t;
-        root=null;
+    public BTree(java.lang.String tVal){
+        this.t=Integer.parseInt(tVal);
+        root=new BTreeNode(t);
+        root.setNumOfKeys(0);
     }
 
-    public String search(String element){
-        if (root==null)
-            return null;
+    public BTreeNode search(String element){
         return root.search(element);
     }
 
     public void insert(String element){
-        if (root!=null)
-            root.insert(element);
-        root=new BTreeNode<>(element,null,t);
+        BTreeNode r=this.root;
+        if (r.getNumOfKeys()==2*t-1){ //root is full
+            BTreeNode s=new BTreeNode(t);
+            root=s;
+            s.setNumOfKeys(0);
+            s.getChildren()[0]=r;
+            s.splitChild(1);
+            s.insertNonFull(element);
+        }
+        else r.insertNonFull(element);
     }
+
+    public String inOrder(){
+        return root.getValues()[0]+"_0, "+root.inOrder(0);
+    }
+
+
 
 }
