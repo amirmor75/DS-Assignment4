@@ -4,7 +4,7 @@ import java.io.FileReader;
 public class BTree{
 
     private int t;
-    BTreeNode root;
+    private BTreeNode root;
 
     public BTree(java.lang.String tVal){
         this.t=Integer.parseInt(tVal);
@@ -35,6 +35,11 @@ public class BTree{
         return "";
     }
 
+    public void delete(String element,BTreeNode root){
+        if (root.getNumOfKeys()!=0)
+            root.delete(element,root);
+    }
+
     public String getSearchTime(String filePath){
         double start=System.nanoTime()/1000000.0;
         try {
@@ -54,12 +59,30 @@ public class BTree{
         return output;
     }
 
-    public  void createFullTree(String target){
-
+    public  void createFullTree(String filePath){
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            String str;
+            while ((str=reader.readLine())!=null){
+                this.insert(str);
+            }
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
-    public void  deleteKeysFromTree(String target){
-
+    public void  deleteKeysFromTree(String filePath){
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            String str;
+            while ((str=reader.readLine())!=null){
+                this.delete(str,root);
+            }
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     @Override

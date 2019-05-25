@@ -96,6 +96,27 @@ public class BTreeNode{
         return result;
     }
 
+    public void delete(String element,BTreeNode root){
+        BTreeNode temp =root.search(element);
+        if(temp.isLeaf() && temp.numOfKeys > t - 1)
+        {
+            int i = 0;
+            while( element.compareTo(values[i])>0)
+            {
+                i++;
+            }
+            for(int j = i; j < 2*t - 2; j++)
+            {
+                temp.values[j] = temp.values[j+1];
+            }
+            temp.numOfKeys --;
+        }
+        else
+        {
+            System.out.println("This node is either not a leaf or has less than order - 1 keys.");
+        }
+    }
+
     public int getNumOfKeys() {
         return numOfKeys;
     }
