@@ -18,7 +18,7 @@ public class BTreeNode{
 
     public BTreeNode search(String element){
         int i=0;
-        while (i<this.numOfKeys&element.compareTo(values[i])>0){
+        while (i<this.numOfKeys&&element.compareTo(values[i])>0){
             i=i+1;
         }
         if (i<numOfKeys&element.equals(values[i])){
