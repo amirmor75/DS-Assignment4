@@ -5,7 +5,9 @@ public class Main {
         BTree btree = new BTree("2");
         btree.createFullTree("C:\\Users\\amitc\\Desktop\\Degree\\Second Semester\\Data Structures\\Assigments To Submit\\Assignment4\\bad_passwords.txt");
         System.out.println(btree);
-        System.out.println(btree.getHeight());
+        //System.out.println(btree.getHeight());
+        btree.deleteKeysFromTree("C:\\Users\\amitc\\Desktop\\Degree\\Second Semester\\Data Structures\\Assigments To Submit\\Assignment4\\delete_keys.txt");
+        System.out.println(btree);
     }
 
 }

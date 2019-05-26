@@ -1,9 +1,10 @@
+import java.util.Objects;
+
 public class BTreeNode{
     private String [] values;
     private int t;
     private BTreeNode[] children;
     private int numOfKeys;
-
 
     public BTreeNode(int t){
         this.values=new String[2*t-1];
@@ -75,7 +76,7 @@ public class BTreeNode{
             numOfKeys=numOfKeys+1;
         }
         else {
-            while (i>=0&element.compareTo(values[i])<0)
+            while (i>=0&&element.compareTo(values[i])<0)
                 i=i-1;
             i=i+1;
             if (children[i].numOfKeys==2*t-1){
@@ -105,26 +106,193 @@ public class BTreeNode{
         return result;
     }
 
-    public void delete(String element,BTreeNode root){ // not done yet
-        BTreeNode temp =root.search(element);
-        if(temp.isLeaf() && temp.numOfKeys > t - 1)
-        {
-            int i = 0;
-            while( element.compareTo(values[i])>0)
-            {
-                i++;
-            }
-            for(int j = i; j < 2*t - 2; j++)
-            {
-                temp.values[j] = temp.values[j+1];
-            }
-            temp.numOfKeys --;
+    public boolean delete(Object obj,BTreeNode root,int size) {
+        Objects.requireNonNull(obj);
+        @SuppressWarnings("unchecked")
+        String key = (String) obj;
+
+        // Walk down the tree
+        BTreeNode bTreeNode = root.search(key);
+        int index=0;
+        for (String str : bTreeNode.getValues()){
+            if (!str.equals(key))
+                index++;
+            else break;
         }
-        else
-        {
-            System.out.println("This node is either not a leaf or has less than order - 1 keys.");
+        BTreeNode node = root;
+        while (true) {
+            assert node.numOfKeys<= 2*t-1;
+            assert node == root || node.numOfKeys > t-1;
+            if (node.isLeaf()) {
+                if (index >= 0) {  // Simple removal from leaf
+                    node.removeKeyAndChild(index, -1);
+                    assert size > 0;
+                    size--;
+                    return true;
+                } else
+                    return false;
+
+            } else {  // Internal node
+                if (index >= 0) {  // Key is stored at current node
+                    BTreeNode left  = node.children[index];
+                    BTreeNode right = node.children[index + 1];
+                    assert left != null && right != null;
+                    if (left.numOfKeys > t-1) {  // Replace key with predecessor
+                        node.values[index] = left.removeMax();
+                        assert size > 0;
+                        size=size-1;
+                        return true;
+                    } else if (right.numOfKeys > t-1) {  // Replace key with successor
+                        node.values[index] = right.removeMin();
+                        assert size > 0;
+                        size--;
+                        return true;
+                    } else {  // Merge key and right node into left node, then recurse
+                        node.mergeChildren(index);
+                        if (node == root && root.numOfKeys == 0) {
+                            root = root.children[0];  // Decrement tree height
+                            assert root != null;
+                        }
+                        node = left;
+                        index = t-1;  // Index known due to merging; no need to search
+                    }
+
+                } else {  // Key might be found in some child
+                    BTreeNode child = node.ensureChildRemove(~index);
+                    if (node == root && root.numOfKeys == 0) {
+                        root = root.children[0];  // Decrement tree height
+                        assert root != null;
+                    }
+                    node = child;
+                    BTreeNode temp = root.search(key);
+                    index=0;
+                    for (String str : temp.getValues()){
+                        if (!str.equals(key))
+                            index++;
+                        else break;
+                    }
+                }
+            }
         }
     }
+    public String removeKeyAndChild(int keyIndex, int childIndex) {
+        assert 1 <= numOfKeys && numOfKeys <= values.length;
+        assert 0 <= keyIndex && keyIndex < numOfKeys;
+
+        // Handle children array
+        if (isLeaf())
+            assert childIndex == -1;
+        else {
+            assert 0 <= childIndex && childIndex <= numOfKeys;
+            assert children[childIndex] != null;
+            System.arraycopy(children, childIndex + 1, children, childIndex, numOfKeys - childIndex);
+            children[numOfKeys] = null;
+        }
+
+        // Handle keys array
+        String result =values[keyIndex];
+        assert result != null;
+        System.arraycopy(values, keyIndex + 1,values, keyIndex, numOfKeys - 1 - keyIndex);
+        values[numOfKeys - 1] = null;
+        numOfKeys=numOfKeys-1;
+        return result;
+    }
+
+    public BTreeNode ensureChildRemove(int index) {
+        // Preliminaries
+        assert !this.isLeaf() && 0 <= index && index <= this.numOfKeys;
+        BTreeNode child = children[index];
+        if (child.numOfKeys > t-1)  // Already satisfies the condition
+            return child;
+        assert child.numOfKeys == t-1;
+
+        // Get siblings
+        BTreeNode left = index >= 1 ? this.children[index - 1] : null;
+        BTreeNode right = index < this.numOfKeys ? this.children[index + 1] : null;
+        boolean internal = !child.isLeaf();
+        assert left != null || right != null;  // At least one sibling exists because degree >= 2
+        assert left  == null || left .isLeaf() != internal;  // Sibling must be same type (internal/leaf) as child
+        assert right == null || right.isLeaf() != internal;  // Sibling must be same type (internal/leaf) as child
+
+        if (left != null && left.numOfKeys > t-1) {  // Steal rightmost item from left sibling
+            child.insertKeyAndChild(0, this.values[index - 1],
+                    (internal ? 0 : -1), (internal ? left.children[left.numOfKeys] : null));
+            this.values[index - 1] = left.removeKeyAndChild(left.numOfKeys - 1, (internal ? left.numOfKeys : -1));
+            return child;
+        } else if (right != null && right.numOfKeys > t-1) {  // Steal leftmost item from right sibling
+            child.insertKeyAndChild(child.numOfKeys, this.values[index],
+                    (internal ? child.numOfKeys + 1 : -1), (internal ? right.children[0] : null));
+            this.values[index] = right.removeKeyAndChild(0, (internal ? 0 : -1));
+            return child;
+        } else if (left != null) {  // Merge child into left sibling
+            this.mergeChildren(index - 1);
+            return left;  // This is the only case where the return value is different
+        } else if (right!= null) {  // Merge right sibling into child
+            this.mergeChildren(index);
+            return child;
+        } else
+            throw new AssertionError("Impossible condition");
+    }
+
+
+    // Merges the child node at index+1 into the child node at index,
+    // assuming the current node is not empty and both children have minkeys.
+    public void mergeChildren(int index) {
+        assert !this.isLeaf() && 0 <= index && index < this.numOfKeys;
+        BTreeNode left  = children[index];
+        BTreeNode right = children[index + 1];
+        assert left.numOfKeys == t-1 && right.numOfKeys == t-1;
+        if (!left.isLeaf())
+            System.arraycopy(right.children, 0, left.children, t, t);
+        left.values[t-1] = removeKeyAndChild(index, index + 1);
+        System.arraycopy(right.values, 0, left.values,  t, t-1);
+        left.numOfKeys = 2*t-1;
+    }
+
+
+    // Removes and returns the minimum key among the whole subtree rooted at this node.
+    // Requires this node to be preprocessed to have at least minKeys+1 keys.
+    public String removeMin() {
+        for (BTreeNode node = this; ; ) {
+            assert node.numOfKeys > t-1;
+            if (node.isLeaf())
+                return node.removeKeyAndChild(0, -1);
+            else
+                node = node.ensureChildRemove(0);
+        }
+    }
+
+
+    // Removes and returns the maximum key among the whole subtree rooted at this node.
+    // Requires this node to be preprocessed to have at least minKeys+1 keys.
+    public String removeMax() {
+        for (BTreeNode node = this; ; ) {
+            assert node.numOfKeys > t-1;
+            if (node.isLeaf())
+                return node.removeKeyAndChild(node.numOfKeys - 1, -1);
+            else
+                node = node.ensureChildRemove(node.numOfKeys);
+        }
+    }
+    public void insertKeyAndChild(int keyIndex, String key, int childIndex, BTreeNode child) {
+        assert 0 <= numOfKeys && numOfKeys < 2*t-1 && key != null;
+        assert 0 <= keyIndex && keyIndex <= numOfKeys;
+
+        // Handle children array
+        if (isLeaf())
+            assert childIndex == -1 && child == null;
+        else {
+            assert 0 <= childIndex && childIndex <= numOfKeys + 1 && child != null;
+            System.arraycopy(children, childIndex, children, childIndex + 1, numOfKeys + 1 - childIndex);
+            children[childIndex] = child;
+        }
+
+        // Handle keys array
+        System.arraycopy(values, keyIndex, values, keyIndex + 1, numOfKeys - keyIndex);
+        values[keyIndex] = key;
+        numOfKeys=numOfKeys+1;
+    }
+    //---------------end-----------------//
 
     public int getNumOfKeys() {
         return numOfKeys;

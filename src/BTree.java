@@ -3,6 +3,7 @@ import java.io.FileReader;
 
 public class BTree{
 
+    private int size;
     private int t;
     private BTreeNode root;
 
@@ -10,6 +11,7 @@ public class BTree{
         this.t=Integer.parseInt(tVal);
         root=new BTreeNode(t);
         root.setNumOfKeys(0);
+        size=0;
     }
 
     public BTreeNode search(String element){
@@ -27,13 +29,14 @@ public class BTree{
             s.insertNonFull(element);
         }
         else r.insertNonFull(element);
+        size=size+1;
     }
 
     public String inOrder(){
         String inOrder="";
         if (root.getValues()[0]!=null)
             inOrder= root.inOrder(0);
-        if (inOrder.length()>0&inOrder.charAt(inOrder.length()-1)==',')
+        if (inOrder.length()>0&&inOrder.charAt(inOrder.length()-1)==',')
             inOrder=inOrder.substring(0,inOrder.length()-1);
         return inOrder;
     }
@@ -45,8 +48,10 @@ public class BTree{
     }
 
     public void delete(String element,BTreeNode root){
-        if (root.getNumOfKeys()!=0)
-            root.delete(element,root);
+        if (root.getNumOfKeys()!=0) {
+            root.delete(element, root,size);
+            size=size-1;
+        }
     }
 
     public String getSearchTime(String filePath){
