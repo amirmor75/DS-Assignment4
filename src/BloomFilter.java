@@ -9,8 +9,6 @@ public class BloomFilter {
     private boolean[] binaryArray;
     private static final int p=15486907;
 
-
-
     public BloomFilter(String m1,String txtFilePath){
         try {
             BufferedReader reader = new BufferedReader(new FileReader(txtFilePath));
@@ -53,7 +51,6 @@ public class BloomFilter {
         }
     }
 
-
     public String getFalsePositivePercentage(HashTable hashTable, String filePath){
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
@@ -82,6 +79,7 @@ public class BloomFilter {
         }
 
     }
+
     public String getRejectedPasswordsAmount(String filePath){
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));

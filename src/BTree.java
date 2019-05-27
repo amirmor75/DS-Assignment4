@@ -52,6 +52,7 @@ public class BTree{
     public BTreeNode getRoot() {
         return root;
     }
+
     public void setRoot(BTreeNode root){
         this.root=root;
     }
