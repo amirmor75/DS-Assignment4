@@ -38,9 +38,6 @@ public class HashTable {
         return passValue;
     }
 
-    public HashList[] getTable() {
-        return table;
-    }
     public boolean contains(int key){
         return table[hashFunction(key)].contains(key);
     }

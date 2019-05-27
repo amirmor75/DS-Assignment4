@@ -6,23 +6,9 @@ public class HashList {
         this.first=null;
     }
 
-    public HashList(HashListElement first){
-        if (first==null)
-            throw new RuntimeException("null element entered");
-        this.first=first;
-    }
-
     public void addfirst(int value){
         HashListElement temp=first;
         first=new HashListElement(value,temp);
-    }
-
-    public HashListElement getFirst() {
-        return first;
-    }
-
-    public void setFirst(HashListElement first) {
-        this.first = first;
     }
 
     public boolean contains(int key){
