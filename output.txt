@@ -1,5 +1,5 @@
-0.2
-6
+0.3
+14
 111111_2,123456_1,Donald_2,google_0,hellow_2,login_1,password_2,querty_1,starwars_2,welcome_2,zxcvbnm_2
-0.3793_0.363
+0.3668_0.354
 111111_1,123456_0,Donald_1,google_0,login_1,password_0,starwars_1,welcome_1,zxcvbnm_1
