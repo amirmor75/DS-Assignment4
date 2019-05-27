@@ -44,4 +44,23 @@ public class HashTable {
     public boolean contains(int key){
         return table[hashFunction(key)].contains(key);
     }
+
+    public String getSearchTime(String filePath) {
+        double start=System.nanoTime()/1000000.0;
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            String str;
+            while ((str=reader.readLine())!=null){
+                this.contains(Integer.parseInt(str));
+            }
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        double end=System.nanoTime()/1000000.0;
+        String output=String.valueOf(end-start);
+        int indexOfDot=output.indexOf('.');
+        output=output.substring(0,indexOfDot+4);
+        return output;
+    }
 }

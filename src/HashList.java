@@ -11,7 +11,8 @@ public class HashList {
     }
 
     public void addfirst(int value){
-        first=new HashListElement(value,first);
+        HashListElement temp=first;
+        first=new HashListElement(value,temp);
     }
 
     public HashListElement getFirst() {
@@ -24,7 +25,7 @@ public class HashList {
 
     public boolean contains(int key){
         HashListElement pos=first;
-        while (first!=null) {
+        while (pos!=null) {
             if (pos.getValue() == key)
                 return true;
             pos=pos.getNext();
