@@ -7,6 +7,8 @@ public class HashList {
     }
 
     public HashList(HashListElement first){
+        if (first==null)
+            throw new RuntimeException("null element entered");
         this.first=first;
     }
 
