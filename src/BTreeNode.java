@@ -1,4 +1,4 @@
-import java.util.Objects;
+
 
 public class BTreeNode{
     private String [] values;
@@ -114,11 +114,10 @@ public class BTreeNode{
         }
         return result;
     }
-
-    public boolean delete(Object obj,BTree tree) {
-        if (!(obj instanceof String))
+    //deletion methods -start- ------------------------------------//
+    public boolean delete(String key,BTree tree) {
+        if (key==null)
             throw new RuntimeException("null element entered, or not String type");
-        String key = (String) obj;
         // Walk down the tree
         int size=tree.getSize();
         BTreeNode root=tree.getRoot();

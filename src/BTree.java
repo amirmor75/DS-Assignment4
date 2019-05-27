@@ -58,7 +58,7 @@ public class BTree{
 
     public void delete(String element){
         if (root.getNumOfKeys()!=0) {
-            root.delete(element, this);
+            root.delete(element,this);
             //size=size-1;
         }
     }
