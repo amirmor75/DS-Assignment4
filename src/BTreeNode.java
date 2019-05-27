@@ -39,7 +39,21 @@ public class BTreeNode{
         }
         return true;
     }
-
+    public int searchAtNode(String obj) {
+        int i = 0;
+        while (i < numOfKeys) {
+            int cmp = obj.compareTo(values[i]);
+            if (cmp == 0) {
+                assert 0 <= i && i < numOfKeys;
+                return i;  // Key found
+            } else if (cmp > 0)
+                i++;
+            else  // cmp < 0
+                break;
+        }
+        assert 0 <= i && i <= numOfKeys;
+        return ~i;  // Not found, caller should recurse on child
+    }
 
     public void splitChild(int i){ //split the i'th child, meaning the i-1 in the array
         BTreeNode y=this.children[i-1]; //the one we want to split
@@ -87,11 +101,6 @@ public class BTreeNode{
             children[i].insertNonFull(element);
         }
     }
-    public int getHeight(){
-        if (children[0]!=null)
-            return 1+children[0].getHeight();
-        return 1;
-    }
 
     public String inOrder(int depth){
         String result = "";
@@ -106,19 +115,14 @@ public class BTreeNode{
         return result;
     }
 
-    public boolean delete(Object obj,BTreeNode root,int size) {
+    public boolean delete(Object obj,BTree tree) {
         Objects.requireNonNull(obj);
         @SuppressWarnings("unchecked")
         String key = (String) obj;
-
         // Walk down the tree
-        BTreeNode bTreeNode = root.search(key);
-        int index=0;
-        for (String str : bTreeNode.getValues()){
-            if (!str.equals(key))
-                index++;
-            else break;
-        }
+        int size=tree.getSize();
+        BTreeNode root=tree.getRoot();
+        int index=root.searchAtNode(key);
         BTreeNode node = root;
         while (true) {
             assert node.numOfKeys<= 2*t-1;
@@ -127,7 +131,8 @@ public class BTreeNode{
                 if (index >= 0) {  // Simple removal from leaf
                     node.removeKeyAndChild(index, -1);
                     assert size > 0;
-                    size--;
+                    tree.setSize(tree.getSize()-1);
+                    tree.setRoot(root);
                     return true;
                 } else
                     return false;
@@ -140,12 +145,14 @@ public class BTreeNode{
                     if (left.numOfKeys > t-1) {  // Replace key with predecessor
                         node.values[index] = left.removeMax();
                         assert size > 0;
-                        size=size-1;
+                        tree.setSize(tree.getSize()-1);
+                        tree.setRoot(root);
                         return true;
                     } else if (right.numOfKeys > t-1) {  // Replace key with successor
                         node.values[index] = right.removeMin();
                         assert size > 0;
-                        size--;
+                        tree.setSize(tree.getSize()-1);
+                        tree.setRoot(root);
                         return true;
                     } else {  // Merge key and right node into left node, then recurse
                         node.mergeChildren(index);
@@ -164,13 +171,7 @@ public class BTreeNode{
                         assert root != null;
                     }
                     node = child;
-                    BTreeNode temp = root.search(key);
-                    index=0;
-                    for (String str : temp.getValues()){
-                        if (!str.equals(key))
-                            index++;
-                        else break;
-                    }
+                    index=node.searchAtNode(key);
                 }
             }
         }

@@ -7,7 +7,7 @@ public class BTree{
     private int t;
     private BTreeNode root;
 
-    public BTree(java.lang.String tVal){
+    public BTree(String tVal){
         this.t=Integer.parseInt(tVal);
         root=new BTreeNode(t);
         root.setNumOfKeys(0);
@@ -41,16 +41,25 @@ public class BTree{
         return inOrder;
     }
 
-    public int getHeight(){
-        if (root.getChildren()[0]==null)
-            return 0;
-        else return root.getHeight();
+    public int getSize() {
+        return size;
     }
 
-    public void delete(String element,BTreeNode root){
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public BTreeNode getRoot() {
+        return root;
+    }
+    public void setRoot(BTreeNode root){
+        this.root=root;
+    }
+
+    public void delete(String element){
         if (root.getNumOfKeys()!=0) {
-            root.delete(element, root,size);
-            size=size-1;
+            root.delete(element, this);
+            //size=size-1;
         }
     }
 
@@ -91,7 +100,7 @@ public class BTree{
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             String str;
             while ((str=reader.readLine())!=null){
-                this.delete(str,root);
+                this.delete(str);
             }
         }
         catch (Exception e){
