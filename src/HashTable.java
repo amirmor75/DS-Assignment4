@@ -38,9 +38,6 @@ public class HashTable {
         return passValue;
     }
 
-    public HashList[] getTable() {
-        return table;
-    }
     public boolean contains(int key){
         return table[hashFunction(key)].contains(key);
     }
@@ -51,7 +48,7 @@ public class HashTable {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             String str;
             while ((str=reader.readLine())!=null){
-                this.contains(Integer.parseInt(str));
+                contains(passwordValue(str));
             }
         }
         catch (Exception e){

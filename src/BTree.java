@@ -52,13 +52,14 @@ public class BTree{
     public BTreeNode getRoot() {
         return root;
     }
+
     public void setRoot(BTreeNode root){
         this.root=root;
     }
 
     public void delete(String element){
         if (root.getNumOfKeys()!=0) {
-            root.delete(element, this);
+            root.delete(element,this);
             //size=size-1;
         }
     }

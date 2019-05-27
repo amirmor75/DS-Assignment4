@@ -7,9 +7,7 @@ public class BloomFilter {
 
     private String[] hashFunctions;
     private boolean[] binaryArray;
-    private static int p=15486907;
-
-
+    private static final int p=15486907;
 
     public BloomFilter(String m1,String txtFilePath){
         try {
@@ -35,7 +33,6 @@ public class BloomFilter {
 
     public void updateTable(String path){
         try {
-
             int m1=binaryArray.length;
             BufferedReader reader = new BufferedReader(new FileReader(path));
             String str;
@@ -53,7 +50,6 @@ public class BloomFilter {
             System.out.println("file not found");
         }
     }
-
 
     public String getFalsePositivePercentage(HashTable hashTable, String filePath){
         try {
@@ -83,6 +79,7 @@ public class BloomFilter {
         }
 
     }
+
     public String getRejectedPasswordsAmount(String filePath){
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
@@ -103,18 +100,17 @@ public class BloomFilter {
 
     public boolean isBad(int passValue){
         for (int i = 0; i <hashFunctions.length ; i++) {
-            if(!binaryArray[hashedValue(passValue,hashFunctions.length,hashFunctions[i])])
+            if(!binaryArray[hashedValue(passValue,binaryArray.length,hashFunctions[i])])
                 return false;
         }
         return true;
     }
 
     public int passwordValue(String pass){
-        int passValue=0;
-        for (int i = 0; i <pass.length() ; i++)
-            passValue+= (((int)pass.charAt(i))*Math.pow(256,pass.length()-i-1))%p;
-        passValue=passValue%p;
-        return passValue;
+        long passValue=pass.charAt(0);
+        for (int i = 1; i <pass.length() ; i++)
+            passValue= (pass.charAt(i)+256*passValue)%p;
+        return (int)passValue;
     }
 
     public int hashedValue(int passValue,int arrayLength,String hashFunction){
@@ -122,8 +118,7 @@ public class BloomFilter {
         String[] split= hashFunction.split("_");
         int alpha=Integer.parseInt(split[0]);
         int betta=Integer.parseInt(split[1]);
-        int index=((alpha*passValue+betta)%p)%arrayLength;
-        return index;
+        return ((alpha*passValue+betta)%p)%arrayLength;
     }
 
 }
