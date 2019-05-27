@@ -116,8 +116,8 @@ public class BTreeNode{
     }
 
     public boolean delete(Object obj,BTree tree) {
-        Objects.requireNonNull(obj);
-        @SuppressWarnings("unchecked")
+        if (!(obj instanceof String))
+            throw new RuntimeException("null element entered, or not String type");
         String key = (String) obj;
         // Walk down the tree
         int size=tree.getSize();
