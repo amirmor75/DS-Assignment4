@@ -88,6 +88,7 @@ public class BTreeNode{
     public void insertNonFull(String element){
         if (element==null||element.length()==0)
             throw new RuntimeException("null element entered or empty password");
+        element=element.toLowerCase(); //considering small letters only
         int i=numOfKeys-1;
         if (isLeaf()){
             while (i>=0&&element.compareTo(values[i])<0){
