@@ -7,8 +7,6 @@ public class BTreeNode{
     private int numOfKeys;
 
     public BTreeNode(int t){
-        if (t<0)
-            throw new RuntimeException("t value must be positive!");
         this.values=new String[2*t-1];
         for (int i=0;i<values.length;i=i+1)
             values[i]=null;
@@ -20,8 +18,6 @@ public class BTreeNode{
     }
 
     public BTreeNode search(String element){
-        if (element==null)
-            throw new RuntimeException("null element entered");
         int i=0;
         while (i<this.numOfKeys&&element.compareTo(values[i])>0){
             i=i+1;
@@ -44,8 +40,6 @@ public class BTreeNode{
         return true;
     }
     public int searchAtNode(String obj) {
-        if (obj==null)
-            throw new RuntimeException("null element entered");
         int i = 0;
         while (i < numOfKeys) {
             int cmp = obj.compareTo(values[i]);
@@ -86,8 +80,6 @@ public class BTreeNode{
     }
 
     public void insertNonFull(String element){
-        if (element==null||element.length()==0)
-            throw new RuntimeException("null element entered or empty password");
         element=element.toLowerCase(); //considering small letters only
         int i=numOfKeys-1;
         if (isLeaf()){
@@ -125,8 +117,6 @@ public class BTreeNode{
     }
     //deletion methods -start- ------------------------------------//
     public boolean delete(String key,BTree tree) {
-        if (key==null)
-            throw new RuntimeException("null element entered, or not String type");
         // Walk down the tree
         int size=tree.getSize();
         BTreeNode root=tree.getRoot();

@@ -9,16 +9,22 @@ public class BTree{
 
     public BTree(String tVal){
         this.t=Integer.parseInt(tVal);
+        if (t<2)
+            throw new RuntimeException("t value must be positive!");
         root=new BTreeNode(t);
         root.setNumOfKeys(0);
         size=0;
     }
 
     public BTreeNode search(String element){
+        if (element==null)
+            throw new RuntimeException("null element entered");
         return root.search(element);
     }
 
     public void insert(String element){
+        if (element==null||element.length()==0)
+            throw new RuntimeException("null element entered or empty password");
         BTreeNode r=this.root;
         if (r.getNumOfKeys()==2*t-1){ //root is full
             BTreeNode s=new BTreeNode(t);
@@ -58,9 +64,10 @@ public class BTree{
     }
 
     public void delete(String element){
+        if (element==null||element.length()==0)
+            throw new RuntimeException("null element entered,or empty string entered!");
         if (root.getNumOfKeys()!=0) {
             root.delete(element,this);
-            //size=size-1;
         }
     }
 
