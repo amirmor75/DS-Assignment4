@@ -67,11 +67,11 @@ public class BTreeNode{
             for (int j=0;j<t;j=j+1)
                 z.children[j]=y.children[j+t];
         }// transfer done
-        for (int j=this.numOfKeys;j>=i+1;j=j-1){ //now we want to update y's parent to point at the children we moved, by simply move each pointer to the next one.
+        for (int j=this.numOfKeys;j>=i;j=j-1){ //now we want to update y's parent to point at the children we moved, by simply move each pointer to the next one.
             this.children[j+1]=this.children[j];
         }
         this.children[i]=z;
-        for (int j=numOfKeys-1;j>=i;j=j-1) { //making room for the one extra node of y that went up
+        for (int j=numOfKeys-1;j>=i-1;j=j-1) { //making room for the one extra node of y that went up
             values[j + 1] = values[j];
         }
         values[i-1]=y.values[t-1]; //inserting the node in the middle, the one we made room for.
