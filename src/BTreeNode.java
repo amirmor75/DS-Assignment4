@@ -29,6 +29,7 @@ public class BTreeNode {
         } else return children[i].search(element);
     }
 
+
     public boolean isLeaf() {
 
         for (BTreeNode bt : children) {
@@ -66,11 +67,11 @@ public class BTreeNode {
             for (int j = 0; j < t; j = j + 1)
                 z.children[j] = y.children[j + t];
         }// transfer done
-        for (int j = this.numOfKeys; j >= i + 1; j = j - 1) { //now we want to update y's parent to point at the children we moved, by simply move each pointer to the next one.
+        for (int j = this.numOfKeys; j >= i; j = j - 1) { //now we want to update y's parent to point at the children we moved, by simply move each pointer to the next one.
             this.children[j + 1] = this.children[j];
         }
         this.children[i] = z;
-        for (int j = numOfKeys - 1; j >= i; j = j - 1) { //making room for the one extra node of y that went up
+        for (int j = numOfKeys - 1; j >= i - 1; j = j - 1) { //making room for the one extra node of y that went up
             values[j + 1] = values[j];
         }
         values[i - 1] = y.values[t - 1]; //inserting the node in the middle, the one we made room for.
@@ -117,41 +118,108 @@ public class BTreeNode {
 
     public boolean delete(String key, BTree tree) {
         // Walk down the tree
-        BTreeNode keyNode=tree.search(key);
-        if (keyNode==null)
+        BTreeNode keyNode = tree.search(key);
+        BTreeNode fatherOfNode=searchFather(key,tree.getRoot());
+        if (keyNode == null)
             return false; //from now on we know key exists
-        BTreeNode root= tree.getRoot();
-        BTreeNode temp= root;
-        int keyIndex=keyNode.searchIndex(keyNode,key);
+        int keyIndex = keyNode.searchIndex(keyNode, key);
         if (keyNode.isLeaf()) {
-            if(keyNode.numOfKeys>=t) {
-                //safe delete
-            }
-            else {// num of keys is t-1
-                if(true)//checks if one of brothers is >=t
-                {
-                    //takes smallest of biggest and gives father
-                }
-                else // brothers are t-1
+            if (keyNode.numOfKeys >= t) {
+                safeDeletion(keyNode,keyIndex);
+            } else {// num of keys is t-1
+                BTreeNode leftBro=getLeftBrother(fatherOfNode,keyNode);
+                BTreeNode rightBro=getRightBrother(fatherOfNode,keyNode);
+                boolean leftBroNull=leftBro==null;
+                boolean rightBroNull=rightBro==null;
+                if (!rightBroNull && rightBro.numOfKeys>=t | !leftBroNull && leftBro.numOfKeys>=t )//checks if one of brothers is >=t
+                {//takes smallest of biggest and gives father or opposite
+                    if(!rightBroNull && rightBro.numOfKeys>=t){
+                        caseOneRightBrother(keyNode,fatherOfNode,rightBro,key);
+                    }
+                    else{//!leftBroNull && leftBro.numOfKeys>=t
+                        caseOneLeftBrother(keyNode,fatherOfNode,leftBro,key);
+                    }
+                } else // both brothers are t-1
                 {
                     //merges
                 }
             }
-        }
-        else {//internal node
+        } else {//internal node
             if (true) //checks if one of sons has >=t
             {
-                //takes predesseccor or sucssecor and replace with key
-            }
-            else {// both sons are t-1
+                //takes predecessor or successor and replace with key
+            } else {// both sons are t-1
                 //merges father and sons
             }
         }
-       return false;
+        return false;
+    }
+    public int RightFatherKeyIndex(BTreeNode father,BTreeNode middleSon){
+        for (int i = 0; i <=father.numOfKeys ; i++) {
+            if(father.children[i].equals(middleSon)& i!=0)
+                return i;
+        }
+        return -1;
+    }
+    public void caseOneRightBrother(BTreeNode keyNode,BTreeNode fatherOfNode,BTreeNode rightBro,String key){
+        keyNode.values[t]=fatherOfNode.values[RightFatherKeyIndex(fatherOfNode,keyNode)];
+        fatherOfNode.values[RightFatherKeyIndex(fatherOfNode,keyNode)]=rightBro.values[0];
+        for (int i = 0; i < rightBro.numOfKeys-1 ; i++) {
+            rightBro.values[i]=rightBro.values[i+1];
+        }
+        safeDeletion(keyNode,keyNodeIndex(keyNode,key));
+    }
+    public void caseOneLeftBrother(BTreeNode keyNode,BTreeNode fatherOfNode,BTreeNode leftBro,String key){
+        keyNode.values[t]=fatherOfNode.values[RightFatherKeyIndex(fatherOfNode,keyNode)-1];
+        fatherOfNode.values[RightFatherKeyIndex(fatherOfNode,keyNode)-1]=leftBro.values[leftBro.numOfKeys-1];
+        for (int i = 0; i < leftBro.numOfKeys-1 ; i++) {
+            leftBro.values[i]=leftBro.values[i+1];
+        }
+        safeDeletion(keyNode,keyNodeIndex(keyNode,key));
+    }
+    public int keyNodeIndex(BTreeNode keyNode,String key){
+        for (int i = 0; i < keyNode.numOfKeys ; i++) {
+            if (keyNode.values[i].equals(key))
+                return i;
+        }
+        return -1;
+
+    }
+    public BTreeNode getLeftBrother(BTreeNode father,BTreeNode middleSon){
+
+        for (int i = 0; i <=father.numOfKeys ; i++) {
+            if(father.children[i].equals(middleSon)& i!=0)
+                return children[i];
+        }
+        return null;
+    }
+    public BTreeNode getRightBrother(BTreeNode father,BTreeNode middleSon){
+        for (int i = 0; i <=father.numOfKeys ; i++) {
+            if(father.children[i].equals(middleSon)& i!=father.numOfKeys)
+                return children[i+1];
+        }
+        return null;
+    }
+
+    public void safeDeletion(BTreeNode target,int index){
+        for (int i=index;i<numOfKeys;i=i+1){
+            target.values[i]=target.values[i+1];
+        }
+    }
+    public BTreeNode searchFather(String key,BTreeNode root) {//assumes child actually exists.
+        int i = 0;
+        if (root.isLeaf())
+            throw new RuntimeException("leaf element entered to father search");
+        while (i < root.numOfKeys && key.compareTo(root.values[i]) > 0) {
+            i = i + 1;
+        }
+        if (root.children[i]==this) {
+            return root;
+        } else return children[i].searchFather(key,root.children[i]);
     }
 
     public int searchIndex(BTreeNode bt, String key) {
-        for (int i=0;i<bt.numOfKeys;i=i+1) {
+        for (int i = 0; i < bt.numOfKeys; i = i + 1) {
             if (bt.values[i].equals(key))
                 return i;
         }
@@ -340,23 +408,21 @@ public class BTreeNode {
     */
 
 
+    public int getNumOfKeys() {
+        return numOfKeys;
+    }
 
+    public void setNumOfKeys(int numOfKeys) {
+        this.numOfKeys = numOfKeys;
+    }
 
-            public int getNumOfKeys () {
-                return numOfKeys;
-            }
+    public BTreeNode[] getChildren() {
+        return children;
+    }
 
-            public void setNumOfKeys ( int numOfKeys){
-                this.numOfKeys = numOfKeys;
-            }
-
-            public BTreeNode[] getChildren () {
-                return children;
-            }
-
-            public String[] getValues () {
-                return values;
-            }
-        }
+    public String[] getValues() {
+        return values;
+    }
+}
 
 
