@@ -39,6 +39,7 @@ public class BTreeNode{
         }
         return true;
     }
+
     public int searchAtNode(String element) {
         int i = 0;
         while (i < numOfKeys) {
@@ -58,15 +59,15 @@ public class BTreeNode{
         BTreeNode z=new BTreeNode(y.t); // the new son in the height of y, we are targeting to move nodes to z,
         // while raising one to "this".
         z.numOfKeys=t-1; // one up, y will have t-1 as well as z.
-        for (int j=0;j<t-1;j=j+1){ // taking the last t-1 keys from y(the one we want to split) and move them to z.
-            System.arraycopy(y.values,t,z.values,0,t-1);
-        } //transfer done
+        // taking the last t-1 keys from y(the one we want to split) and move them to z.
+        System.arraycopy(y.values,t,z.values,0,t-1);
         if (!y.isLeaf()){ //if y is not a leaf, we would like to copy his children to z as well.
             System.arraycopy(y.children,t,z.children,0,t);
         }// transfer done
         for (int j=this.numOfKeys;j>=i;j=j-1){ //now we want to update y's parent to point at the children we moved, by simply move each pointer to the next one.
             this.children[j+1]=this.children[j];
         }
+
         this.children[i]=z;
         for (int j=numOfKeys-1;j>=i-1;j=j-1) { //making room for the one extra node of y that went up
             values[j + 1] = values[j];
@@ -112,6 +113,7 @@ public class BTreeNode{
         }
         return result;
     }
+
     //deletion methods -start- ------------------------------------//
     public boolean delete(String key,BTree tree) {
 
@@ -121,7 +123,7 @@ public class BTreeNode{
         while (true) {
             if (node.isLeaf()) {
                 if (index >= 0) {  // simple removal from leaf
-                    node.removeKeyAndChild(index, -1);
+                    node.deleteKeyAndUpdateChildren(index, -1);
                     tree.setSize(tree.getSize()-1);
                     tree.setRoot(root);
                     return true;
@@ -143,7 +145,7 @@ public class BTreeNode{
                         tree.setRoot(root);
                         return true;
                     } else {  // merge key and right node into left node, then recurse
-                        node.mergeChildrenAt(index);
+                        node.childrenMergeAt(index);
                         if (node == root && root.numOfKeys == 0) {
                             root = root.children[0];  // tree height goes down
                         }
@@ -152,7 +154,7 @@ public class BTreeNode{
                     }
 
                 } else {  // key can be found at children
-                    BTreeNode child = node.safeChildRemove(-index-1);
+                    BTreeNode child = node.checkRemovePossible(-index-1);
                     if (node == root && root.numOfKeys == 0) {
                         root = root.children[0];  // tree height goes down
                     }
@@ -163,8 +165,7 @@ public class BTreeNode{
         }
     }
 
-
-    public String removeKeyAndChild(int keyIndex, int childIndex) {
+    public String deleteKeyAndUpdateChildren(int keyIndex, int childIndex) {
         // deals with children
         if (!isLeaf()) {
             System.arraycopy(children, childIndex + 1, children, childIndex, numOfKeys - childIndex);
@@ -179,7 +180,7 @@ public class BTreeNode{
         return output;
     }
 
-    public BTreeNode safeChildRemove(int index) {
+    public BTreeNode checkRemovePossible(int index) {
 
         BTreeNode child = children[index];
         if (child.numOfKeys > t-1)  //child satisfies condition
@@ -199,10 +200,10 @@ public class BTreeNode{
         } else if (right != null && right.numOfKeys > t-1) {  // steal leftmost item from right sibling
             return stealLeftMost(child,internal,right,index);
         } else if (left != null) {  // merges child into left sibling
-            this.mergeChildrenAt(index - 1);
+            this.childrenMergeAt(index - 1);
             return left;
         } else if (right!= null) {  // merges right sibling into child
-            this.mergeChildrenAt(index);
+            this.childrenMergeAt(index);
             return child;
         } else
             throw new RuntimeException("Something went wrong, case impossible");
@@ -210,39 +211,40 @@ public class BTreeNode{
 
     public BTreeNode stealRightMost(BTreeNode child,boolean internal,BTreeNode left,int index){
         if (internal){
-            child.insertKeyAndChildAt(0, this.values[index - 1],
+            child.insertToCurrentAt(0, this.values[index - 1],
                      0,left.children[left.numOfKeys]);
-            this.values[index - 1] = left.removeKeyAndChild(left.numOfKeys - 1,left.numOfKeys);
+            this.values[index - 1] = left.deleteKeyAndUpdateChildren(left.numOfKeys - 1,left.numOfKeys);
         }
         else {
-            child.insertKeyAndChildAt(0, this.values[index - 1],
+            child.insertToCurrentAt(0, this.values[index - 1],
                     -1, null);
-            this.values[index - 1] = left.removeKeyAndChild(left.numOfKeys - 1, -1);
+            this.values[index - 1] = left.deleteKeyAndUpdateChildren(left.numOfKeys - 1, -1);
         }
         return child;
     }
+
     public BTreeNode stealLeftMost(BTreeNode child,boolean internal,BTreeNode right,int index){
         if (internal){
-            child.insertKeyAndChildAt(child.numOfKeys, this.values[index],
+            child.insertToCurrentAt(child.numOfKeys, this.values[index],
                      child.numOfKeys + 1 , right.children[0]);
-            this.values[index] = right.removeKeyAndChild(0,  0 );
+            this.values[index] = right.deleteKeyAndUpdateChildren(0,  0 );
         }
         else {
-            child.insertKeyAndChildAt(child.numOfKeys, this.values[index],
+            child.insertToCurrentAt(child.numOfKeys, this.values[index],
                      -1, null);
-            this.values[index] = right.removeKeyAndChild(0, -1);
+            this.values[index] = right.deleteKeyAndUpdateChildren(0, -1);
         }
 
         return child;
     }
 
     // merges right into left, assumption : left and right have t keys.
-    public void mergeChildrenAt(int index) {
+    public void childrenMergeAt(int index) {
         BTreeNode left  = children[index];
         BTreeNode right = children[index + 1];
         if (!left.isLeaf())
             System.arraycopy(right.children, 0, left.children, t, t);
-        left.values[t-1] = removeKeyAndChild(index, index + 1);
+        left.values[t-1] = deleteKeyAndUpdateChildren(index, index + 1);
         System.arraycopy(right.values, 0, left.values,  t, t-1);
         left.numOfKeys = 2*t-1;
     }
@@ -252,9 +254,9 @@ public class BTreeNode{
     public String removeMinimumVal() {
         for (BTreeNode node = this; ; ) {
             if (node.isLeaf())
-                return node.removeKeyAndChild(0, -1);
+                return node.deleteKeyAndUpdateChildren(0, -1);
             else
-                node = node.safeChildRemove(0);
+                node = node.checkRemovePossible(0);
         }
     }
 
@@ -262,13 +264,14 @@ public class BTreeNode{
     public String removeMaximumVal() {
         for (BTreeNode node = this; ; ) {
             if (node.isLeaf())
-                return node.removeKeyAndChild(node.numOfKeys - 1, -1);
+                return node.deleteKeyAndUpdateChildren(node.numOfKeys - 1, -1);
             else
-                node = node.safeChildRemove(node.numOfKeys);
+                node = node.checkRemovePossible(node.numOfKeys);
         }
     }
 
-    public void insertKeyAndChildAt(int keyIndex, String key, int childIndex, BTreeNode child) {
+    // inserts key into current, update numOfKeys.
+    public void insertToCurrentAt(int keyIndex, String key, int childIndex, BTreeNode child) {
         // deal with children
         if (!isLeaf()){
             System.arraycopy(children, childIndex, children, childIndex + 1, numOfKeys + 1 - childIndex);
