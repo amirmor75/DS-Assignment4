@@ -66,6 +66,7 @@ public class BTree{
     public void delete(String element){
         if (element==null||element.length()==0)
             throw new RuntimeException("null element entered,or empty string entered!");
+        element=element.toLowerCase();
         if (root.getNumOfKeys()!=0) {
             root.delete(element,this);
         }
