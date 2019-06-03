@@ -39,20 +39,18 @@ public class BTreeNode{
         }
         return true;
     }
-    public int searchAtNode(String obj) {
+    public int searchAtNode(String element) {
         int i = 0;
         while (i < numOfKeys) {
-            int cmp = obj.compareTo(values[i]);
+            int cmp = element.compareTo(values[i]);
             if (cmp == 0) {
-                assert 0 <= i && i < numOfKeys;
                 return i;  // Key found
             } else if (cmp > 0)
                 i++;
             else  // cmp < 0
                 break;
         }
-        assert 0 <= i && i <= numOfKeys;
-        return ~i;  // Not found, caller should recurse on child
+        return -i-1;  // didn't find, need to search in children
     }
 
     public void splitChild(int i){ //split the i'th child, meaning the i-1 in the array
@@ -61,11 +59,10 @@ public class BTreeNode{
         // while raising one to "this".
         z.numOfKeys=t-1; // one up, y will have t-1 as well as z.
         for (int j=0;j<t-1;j=j+1){ // taking the last t-1 keys from y(the one we want to split) and move them to z.
-            z.values[j]=y.values[j+t];
+            System.arraycopy(y.values,t,z.values,0,t-1);
         } //transfer done
         if (!y.isLeaf()){ //if y is not a leaf, we would like to copy his children to z as well.
-            for (int j=0;j<t;j=j+1)
-                z.children[j]=y.children[j+t];
+            System.arraycopy(y.children,t,z.children,0,t);
         }// transfer done
         for (int j=this.numOfKeys;j>=i;j=j-1){ //now we want to update y's parent to point at the children we moved, by simply move each pointer to the next one.
             this.children[j+1]=this.children[j];
@@ -117,56 +114,47 @@ public class BTreeNode{
     }
     //deletion methods -start- ------------------------------------//
     public boolean delete(String key,BTree tree) {
-        // Walk down the tree
-        int size=tree.getSize();
+
         BTreeNode root=tree.getRoot();
-        int index=root.searchAtNode(key);
-        BTreeNode node = root;
+        int index=root.searchAtNode(key); //if index>=0, we are at the target node.
+        BTreeNode node = root; // the node we use to go sown the tree
         while (true) {
-            assert node.numOfKeys<= 2*t-1;
-            assert node == root || node.numOfKeys > t-1;
             if (node.isLeaf()) {
-                if (index >= 0) {  // Simple removal from leaf
+                if (index >= 0) {  // simple removal from leaf
                     node.removeKeyAndChild(index, -1);
-                    assert size > 0;
                     tree.setSize(tree.getSize()-1);
                     tree.setRoot(root);
                     return true;
                 } else
                     return false;
 
-            } else {  // Internal node
-                if (index >= 0) {  // Key is stored at current node
+            } else {  // target is an internal node
+                if (index >= 0) {  // key at current node
                     BTreeNode left  = node.children[index];
                     BTreeNode right = node.children[index + 1];
-                    assert left != null && right != null;
-                    if (left.numOfKeys > t-1) {  // Replace key with predecessor
+                    if (left.numOfKeys > t-1) {  // replace key with predecessor
                         node.values[index] = left.removeMaximumVal();
-                        assert size > 0;
                         tree.setSize(tree.getSize()-1);
                         tree.setRoot(root);
                         return true;
-                    } else if (right.numOfKeys > t-1) {  // Replace key with successor
+                    } else if (right.numOfKeys > t-1) {  // replace key with successor
                         node.values[index] = right.removeMinimumVal();
-                        assert size > 0;
                         tree.setSize(tree.getSize()-1);
                         tree.setRoot(root);
                         return true;
-                    } else {  // Merge key and right node into left node, then recurse
+                    } else {  // merge key and right node into left node, then recurse
                         node.mergeChildrenAt(index);
                         if (node == root && root.numOfKeys == 0) {
-                            root = root.children[0];  // Decrement tree height
-                            assert root != null;
+                            root = root.children[0];  // tree height goes down
                         }
                         node = left;
-                        index = t-1;  // Index known due to merging; no need to search
+                        index = t-1;  // we know the index because we merged
                     }
 
-                } else {  // Key might be found in some child
-                    BTreeNode child = node.safeChildRemove(~index);
+                } else {  // key can be found at children
+                    BTreeNode child = node.safeChildRemove(-index-1);
                     if (node == root && root.numOfKeys == 0) {
-                        root = root.children[0];  // Decrement tree height
-                        assert root != null;
+                        root = root.children[0];  // tree height goes down
                     }
                     node = child;
                     index=node.searchAtNode(key);
@@ -175,73 +163,83 @@ public class BTreeNode{
         }
     }
 
-    public String removeKeyAndChild(int keyIndex, int childIndex) {
-        assert 1 <= numOfKeys && numOfKeys <= values.length;
-        assert 0 <= keyIndex && keyIndex < numOfKeys;
 
-        // Handle children array
-        if (isLeaf())
-            assert childIndex == -1;
-        else {
-            assert 0 <= childIndex && childIndex <= numOfKeys;
-            assert children[childIndex] != null;
+    public String removeKeyAndChild(int keyIndex, int childIndex) {
+        // deals with children
+        if (!isLeaf()) {
             System.arraycopy(children, childIndex + 1, children, childIndex, numOfKeys - childIndex);
             children[numOfKeys] = null;
         }
 
-        // Handle keys array
-        String result =values[keyIndex];
-        assert result != null;
+        // deal values
+        String output =values[keyIndex];
         System.arraycopy(values, keyIndex + 1,values, keyIndex, numOfKeys - 1 - keyIndex);
         values[numOfKeys - 1] = null;
         numOfKeys=numOfKeys-1;
-        return result;
+        return output;
     }
 
     public BTreeNode safeChildRemove(int index) {
-        // Preliminaries
-        assert !this.isLeaf() && 0 <= index && index <= this.numOfKeys;
+
         BTreeNode child = children[index];
-        if (child.numOfKeys > t-1)  // Already satisfies the condition
+        if (child.numOfKeys > t-1)  //child satisfies condition
             return child;
-        assert child.numOfKeys == t-1;
 
-        // Get siblings
-        BTreeNode left = index >= 1 ? this.children[index - 1] : null;
-        BTreeNode right = index < this.numOfKeys ? this.children[index + 1] : null;
-        boolean internal = !child.isLeaf();
-        assert left != null || right != null;  // At least one sibling exists because degree >= 2
-        assert left  == null || left .isLeaf() != internal;  // Sibling must be same type (internal/leaf) as child
-        assert right == null || right.isLeaf() != internal;  // Sibling must be same type (internal/leaf) as child
+        // take from siblings
+        BTreeNode left=null;
+        if (index>=1)
+            left=this.children[index - 1];
+        BTreeNode right =null;
+        if (index<this.numOfKeys)
+            right=this.children[index + 1];
+        boolean internal = !child.isLeaf(); //indicates weather child is internal node
 
-        if (left != null && left.numOfKeys > t-1) {  // Steal rightmost item from left sibling
-            child.insertKeyAndChildAt(0, this.values[index - 1],
-                    (internal ? 0 : -1), (internal ? left.children[left.numOfKeys] : null));
-            this.values[index - 1] = left.removeKeyAndChild(left.numOfKeys - 1, (internal ? left.numOfKeys : -1));
-            return child;
-        } else if (right != null && right.numOfKeys > t-1) {  // Steal leftmost item from right sibling
-            child.insertKeyAndChildAt(child.numOfKeys, this.values[index],
-                    (internal ? child.numOfKeys + 1 : -1), (internal ? right.children[0] : null));
-            this.values[index] = right.removeKeyAndChild(0, (internal ? 0 : -1));
-            return child;
-        } else if (left != null) {  // Merge child into left sibling
+        if (left != null && left.numOfKeys > t-1) {  // steal rightmost item from left sibling
+            return stealRightMost(child,internal,left,index);
+        } else if (right != null && right.numOfKeys > t-1) {  // steal leftmost item from right sibling
+            return stealLeftMost(child,internal,right,index);
+        } else if (left != null) {  // merges child into left sibling
             this.mergeChildrenAt(index - 1);
-            return left;  // This is the only case where the return value is different
-        } else if (right!= null) {  // Merge right sibling into child
+            return left;
+        } else if (right!= null) {  // merges right sibling into child
             this.mergeChildrenAt(index);
             return child;
         } else
-            throw new AssertionError("Impossible condition");
+            throw new RuntimeException("Something went wrong, case impossible");
     }
 
+    public BTreeNode stealRightMost(BTreeNode child,boolean internal,BTreeNode left,int index){
+        if (internal){
+            child.insertKeyAndChildAt(0, this.values[index - 1],
+                     0,left.children[left.numOfKeys]);
+            this.values[index - 1] = left.removeKeyAndChild(left.numOfKeys - 1,left.numOfKeys);
+        }
+        else {
+            child.insertKeyAndChildAt(0, this.values[index - 1],
+                    -1, null);
+            this.values[index - 1] = left.removeKeyAndChild(left.numOfKeys - 1, -1);
+        }
+        return child;
+    }
+    public BTreeNode stealLeftMost(BTreeNode child,boolean internal,BTreeNode right,int index){
+        if (internal){
+            child.insertKeyAndChildAt(child.numOfKeys, this.values[index],
+                     child.numOfKeys + 1 , right.children[0]);
+            this.values[index] = right.removeKeyAndChild(0,  0 );
+        }
+        else {
+            child.insertKeyAndChildAt(child.numOfKeys, this.values[index],
+                     -1, null);
+            this.values[index] = right.removeKeyAndChild(0, -1);
+        }
 
-    // Merges the child node at index+1 into the child node at index,
-    // assuming the current node is not empty and both children have minkeys.
+        return child;
+    }
+
+    // merges right into left, assumption : left and right have t keys.
     public void mergeChildrenAt(int index) {
-        assert !this.isLeaf() && 0 <= index && index < this.numOfKeys;
         BTreeNode left  = children[index];
         BTreeNode right = children[index + 1];
-        assert left.numOfKeys == t-1 && right.numOfKeys == t-1;
         if (!left.isLeaf())
             System.arraycopy(right.children, 0, left.children, t, t);
         left.values[t-1] = removeKeyAndChild(index, index + 1);
@@ -250,11 +248,9 @@ public class BTreeNode{
     }
 
 
-    // Removes and returns the minimum key among the whole subtree rooted at this node.
-    // Requires this node to be preprocessed to have at least minKeys+1 keys.
+    // returns minimum value in the subtree, assumption : owns t keys.
     public String removeMinimumVal() {
         for (BTreeNode node = this; ; ) {
-            assert node.numOfKeys > t-1;
             if (node.isLeaf())
                 return node.removeKeyAndChild(0, -1);
             else
@@ -262,32 +258,24 @@ public class BTreeNode{
         }
     }
 
-
-    // Removes and returns the maximum key among the whole subtree rooted at this node.
-    // Requires this node to be preprocessed to have at least minKeys+1 keys.
+    // returns maximum value in the subtree, assumption : owns t keys.
     public String removeMaximumVal() {
         for (BTreeNode node = this; ; ) {
-            assert node.numOfKeys > t-1;
             if (node.isLeaf())
                 return node.removeKeyAndChild(node.numOfKeys - 1, -1);
             else
                 node = node.safeChildRemove(node.numOfKeys);
         }
     }
-    public void insertKeyAndChildAt(int keyIndex, String key, int childIndex, BTreeNode child) {
-        assert 0 <= numOfKeys && numOfKeys < 2*t-1 && key != null;
-        assert 0 <= keyIndex && keyIndex <= numOfKeys;
 
-        // Handle children array
-        if (isLeaf())
-            assert childIndex == -1 && child == null;
-        else {
-            assert 0 <= childIndex && childIndex <= numOfKeys + 1 && child != null;
+    public void insertKeyAndChildAt(int keyIndex, String key, int childIndex, BTreeNode child) {
+        // deal with children
+        if (!isLeaf()){
             System.arraycopy(children, childIndex, children, childIndex + 1, numOfKeys + 1 - childIndex);
             children[childIndex] = child;
         }
 
-        // Handle keys array
+        // deal with values
         System.arraycopy(values, keyIndex, values, keyIndex + 1, numOfKeys - keyIndex);
         values[keyIndex] = key;
         numOfKeys=numOfKeys+1;
