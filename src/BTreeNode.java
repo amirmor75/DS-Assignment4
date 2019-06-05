@@ -43,12 +43,12 @@ public class BTreeNode{
     public int searchAtNode(String element) {
         int i = 0;
         while (i < numOfKeys) {
-            int cmp = element.compareTo(values[i]);
-            if (cmp == 0) {
+            int compare = element.compareTo(values[i]);
+            if (compare == 0) {
                 return i;  // Key found
-            } else if (cmp > 0)
-                i++;
-            else  // cmp < 0
+            } else if (compare > 0)
+                i=i+1;
+            else  // compare < 0
                 break;
         }
         return -i-1;  // didn't find, need to search in children
@@ -115,6 +115,8 @@ public class BTreeNode{
     }
 
     //deletion methods -start- ------------------------------------//
+    /**Note: the code below regarding deletion methods, relies on the following link :**/
+    /**https://www.nayuki.io/res/btree-set/BTreeSet.java**/
     public boolean delete(String key,BTree tree) {
 
         BTreeNode root=tree.getRoot();
