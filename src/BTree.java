@@ -17,8 +17,9 @@ public class BTree{
     }
 
     public BTreeNode search(String element){
-        if (element==null)
-            throw new RuntimeException("null element entered");
+        if (element==null||element.length()==0)
+            throw new RuntimeException("null element entered Or empty string");
+        element=element.toLowerCase();
         return root.search(element);
     }
 

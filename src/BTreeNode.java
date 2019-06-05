@@ -135,12 +135,12 @@ public class BTreeNode{
                     BTreeNode left  = node.children[index];
                     BTreeNode right = node.children[index + 1];
                     if (left.numOfKeys > t-1) {  // replace key with predecessor
-                        node.values[index] = left.removeMaximumVal();
+                        node.values[index] = left.extractMax();
                         tree.setSize(tree.getSize()-1);
                         tree.setRoot(root);
                         return true;
                     } else if (right.numOfKeys > t-1) {  // replace key with successor
-                        node.values[index] = right.removeMinimumVal();
+                        node.values[index] = right.extractMin();
                         tree.setSize(tree.getSize()-1);
                         tree.setRoot(root);
                         return true;
@@ -195,14 +195,14 @@ public class BTreeNode{
             right=this.children[index + 1];
         boolean internal = !child.isLeaf(); //indicates weather child is internal node
 
-        if (left != null && left.numOfKeys > t-1) {  // steal rightmost item from left sibling
+        if (left != null && left.numOfKeys > t-1) {  // steal rightmost key from left sibling
             return stealRightMost(child,internal,left,index);
-        } else if (right != null && right.numOfKeys > t-1) {  // steal leftmost item from right sibling
+        } else if (right != null && right.numOfKeys > t-1) {  // steal leftmost key from right sibling
             return stealLeftMost(child,internal,right,index);
         } else if (left != null) {  // merges child into left sibling
             this.childrenMergeAt(index - 1);
             return left;
-        } else if (right!= null) {  // merges right sibling into child
+        }if (right!= null) {  // merges right sibling into child
             this.childrenMergeAt(index);
             return child;
         } else
@@ -251,7 +251,7 @@ public class BTreeNode{
 
 
     // returns minimum value in the subtree, assumption : owns t keys.
-    public String removeMinimumVal() {
+    public String extractMin() {
         for (BTreeNode node = this; ; ) {
             if (node.isLeaf())
                 return node.deleteKeyAndUpdateChildren(0, -1);
@@ -261,7 +261,7 @@ public class BTreeNode{
     }
 
     // returns maximum value in the subtree, assumption : owns t keys.
-    public String removeMaximumVal() {
+    public String extractMax() {
         for (BTreeNode node = this; ; ) {
             if (node.isLeaf())
                 return node.deleteKeyAndUpdateChildren(node.numOfKeys - 1, -1);
