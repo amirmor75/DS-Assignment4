@@ -131,7 +131,7 @@ public class BTreeNode {
                 BTreeNode rightBro=getRightBrother(fatherOfNode,keyNode);
                 boolean leftBroNull=leftBro==null;
                 boolean rightBroNull=rightBro==null;
-                if (!rightBroNull && rightBro.numOfKeys>=t | !leftBroNull && leftBro.numOfKeys>=t )//checks if one of brothers is >=t
+                if ((!rightBroNull && rightBro.numOfKeys>=t) | (!leftBroNull && leftBro.numOfKeys>=t) )//checks if one of brothers is >=t
                 {//takes smallest of biggest and gives father or opposite
                     if(!rightBroNull && rightBro.numOfKeys>=t){
                         caseOneRightBrother(keyNode,fatherOfNode,rightBro,key);
@@ -139,43 +139,160 @@ public class BTreeNode {
                     else{//!leftBroNull && leftBro.numOfKeys>=t
                         caseOneLeftBrother(keyNode,fatherOfNode,leftBro,key);
                     }
-                } else // both brothers are t-1
-                {
+                }
+                else {
+                    // both brothers are t-1 or one doesn't exist
                     //merges
+                    if (!rightBroNull)
+                        caseOneMergeRightBrother(keyNode,rightBro,fatherOfNode,keyIndex);
+                    else
+                        caseOneMergeLeftBrother(keyNode,leftBro,fatherOfNode,keyIndex);
                 }
             }
-        } else {//internal node
-            if (true) //checks if one of sons has >=t
+        }
+        else
+        {//internal node
+            //takes predecessor or successor and replace with key
+            BTreeNode predecessor=predecessor(keyNode,keyIndex);
+            BTreeNode successor=successor(keyNode,keyIndex);
+            if (predecessor.numOfKeys>=t | successor.numOfKeys>=t) //checks if one of sons has >=t keys
             {
-                //takes predecessor or successor and replace with key
-            } else {// both sons are t-1
-                //merges father and sons
+                if (predecessor.numOfKeys>=t)
+                    caseTwoDeleteInternalPredecessor(keyNode,keyIndex,successor);
+                else// successor has >=t keys
+                    caseTwoDeleteInternalSuccessor(keyNode,keyIndex,successor);
+            }
+            else
+            {// both predecessor and successor are t-1
+                BTreeNode preFather=searchFather(predecessor.values[0],tree.getRoot());
+                int rightPreFatherIndex=rightFatherKeyIndex(preFather,predecessor);
+                if (preFather.numOfKeys>=t)
+                {
+
+                }
+                else// father has t-1 keys
+                {
+                    BTreeNode leftPreBrother=getLeftBrother(preFather,predecessor);
+                    if(leftPreBrother!=null) {
+                        if (leftPreBrother.numOfKeys >= t) {
+
+                        } else// left brother has t-1 keys
+                        {
+
+                        }
+                    }
+                    else//left brother is null
+                    {
+                        BTreeNode sucFather=searchFather(successor.values[0],tree.getRoot());
+                        BTreeNode rightSucBrother=getRightBrother(sucFather,successor);
+                        if (rightSucBrother!=null)
+                        {
+                            if(rightSucBrother.numOfKeys>=t)
+                            {
+
+                            }
+                        }
+                        else
+                        {
+
+                        }
+                    }
+                }
             }
         }
         return false;
     }
-    public int RightFatherKeyIndex(BTreeNode father,BTreeNode middleSon){
+    public void caseTwoDeleteInternalSuccessor(BTreeNode keyNode,int keyIndex,BTreeNode successor){
+        keyNode.values[keyIndex]=successor.values[0];
+        successor.values[0]=null;
+        for (int i = 0; i <successor.numOfKeys ; i++)
+            successor.values[i]=successor.values[i+1];
+    }
+    public void caseTwoDeleteInternalPredecessor(BTreeNode keyNode,int keyIndex,BTreeNode predecessor){
+        keyNode.values[keyIndex]=predecessor.values[predecessor.numOfKeys-1];
+        predecessor.values[predecessor.numOfKeys-1]=null;
+    }
+    public BTreeNode predecessor(BTreeNode keyNode,int keyIndex){
+        BTreeNode tempLeftSon=keyNode.children[keyIndex];//left son
+        while (!tempLeftSon.isLeaf()) //goes to predecessor
+            if (!tempLeftSon.isLeaf())
+                tempLeftSon = tempLeftSon.children[tempLeftSon.numOfKeys];
+            return tempLeftSon;
+
+    }
+    public BTreeNode successor(BTreeNode keyNode,int keyIndex){
+        BTreeNode tempRightSon=keyNode.children[keyIndex+1];//right son
+        while ( !tempRightSon.isLeaf())// goes to successor
+            if (!tempRightSon.isLeaf())
+                tempRightSon = tempRightSon.children[0];
+        return  tempRightSon;
+    }
+    public void caseOneMergeRightBrother(BTreeNode keyNode,BTreeNode rightBro,BTreeNode fatherOfNode,int keyIndex){
+        int rightFatherIndex = rightFatherKeyIndex(fatherOfNode, keyNode);
+        keyNode.values[t] = fatherOfNode.values[rightFatherIndex];
+        for (int i = 0; i < rightBro.numOfKeys & rightBro.numOfKeys == t - 1; i++) {
+            keyNode.values[i + t + 1] = rightBro.values[i];
+        }
+        for (int i =rightFatherIndex ; i < fatherOfNode.numOfKeys; i++) {
+            if(i!=fatherOfNode.numOfKeys-1)
+                fatherOfNode.values[i]=fatherOfNode.values[i+1];
+            else// i equals to fatherOfNode.numOfKeys-1 (last node doesn't have next)
+                fatherOfNode.values[i]=null;
+        }
+        for (int i =rightFatherIndex+1 ; i < fatherOfNode.numOfKeys+1; i++) {
+            if(i!=fatherOfNode.numOfKeys)
+                fatherOfNode.children[i]=fatherOfNode.children[i+1];
+            else// i equals to fatherOfNode.numOfKeys (last node doesn't have next)
+                fatherOfNode.children[i]=null;
+        }
+        safeDeletion(keyNode,keyIndex);
+    }
+    public void caseOneMergeLeftBrother(BTreeNode keyNode,BTreeNode leftBro,BTreeNode fatherOfNode,int keyIndex){
+        int leftFatherIndex = rightFatherKeyIndex(fatherOfNode, keyNode)-1;
+        for (int i = 0; i <t-1 ; i++) {
+            keyNode.values[keyNode.numOfKeys-1-i]=keyNode.values[i];
+            keyNode.values[i]=null;
+        }
+        keyNode.values[keyNode.numOfKeys-1-t+1] = fatherOfNode.values[leftFatherIndex];
+        for (int i = 0; i < leftBro.numOfKeys & leftBro.numOfKeys == t - 1; i++) {
+            keyNode.values[i] = leftBro.values[i];
+        }
+        for (int i =leftFatherIndex ; i < fatherOfNode.numOfKeys; i++) {
+            if(i!=fatherOfNode.numOfKeys-1)
+                fatherOfNode.values[i]=fatherOfNode.values[i+1];
+            else// i equals to fatherOfNode.numOfKeys-1 (last node doesn't have next)
+                fatherOfNode.values[i]=null;
+        }
+        for (int i =leftFatherIndex+1 ; i < fatherOfNode.numOfKeys+1; i++) {
+            if(i!=fatherOfNode.numOfKeys)
+                fatherOfNode.children[i]=fatherOfNode.children[i+1];
+            else// i equals to fatherOfNode.numOfKeys (last node doesn't have next)
+                fatherOfNode.children[i]=null;
+        }
+        safeDeletion(keyNode,keyIndex);
+    }
+    public int rightFatherKeyIndex(BTreeNode father,BTreeNode middleSon){//finds the index of fathers node key
         for (int i = 0; i <=father.numOfKeys ; i++) {
             if(father.children[i].equals(middleSon)& i!=0)
                 return i;
         }
         return -1;
     }
-    public void caseOneRightBrother(BTreeNode keyNode,BTreeNode fatherOfNode,BTreeNode rightBro,String key){
-        keyNode.values[t]=fatherOfNode.values[RightFatherKeyIndex(fatherOfNode,keyNode)];
-        fatherOfNode.values[RightFatherKeyIndex(fatherOfNode,keyNode)]=rightBro.values[0];
-        for (int i = 0; i < rightBro.numOfKeys-1 ; i++) {
+    public void caseOneRightBrother(BTreeNode keyNode,BTreeNode fatherOfNode,BTreeNode rightBro,String key){//puts values at relevant places and deletes key leaf, brother has t keys or more.
+        keyNode.values[t]=fatherOfNode.values[rightFatherKeyIndex(fatherOfNode,keyNode)];//adds fathers right key to keynode
+        fatherOfNode.values[rightFatherKeyIndex(fatherOfNode,keyNode)]=rightBro.values[0];//adds rightbro's key to father
+        for (int i = 0; i < rightBro.numOfKeys-1 ; i++) {//shifts the places of right bro to leave no holes
             rightBro.values[i]=rightBro.values[i+1];
         }
-        safeDeletion(keyNode,keyNodeIndex(keyNode,key));
+        safeDeletion(keyNode,keyNodeIndex(keyNode,key));//deletes key
     }
     public void caseOneLeftBrother(BTreeNode keyNode,BTreeNode fatherOfNode,BTreeNode leftBro,String key){
-        keyNode.values[t]=fatherOfNode.values[RightFatherKeyIndex(fatherOfNode,keyNode)-1];
-        fatherOfNode.values[RightFatherKeyIndex(fatherOfNode,keyNode)-1]=leftBro.values[leftBro.numOfKeys-1];
-        for (int i = 0; i < leftBro.numOfKeys-1 ; i++) {
+        keyNode.values[t]=fatherOfNode.values[rightFatherKeyIndex(fatherOfNode,keyNode)-1];//adds fathers left key to keynode
+        fatherOfNode.values[rightFatherKeyIndex(fatherOfNode,keyNode)-1]=leftBro.values[leftBro.numOfKeys-1];//adds leftbro's key to father
+        for (int i = 0; i < leftBro.numOfKeys-1 ; i++) {//shifts the places of left bro to leave no holes
             leftBro.values[i]=leftBro.values[i+1];
         }
-        safeDeletion(keyNode,keyNodeIndex(keyNode,key));
+        safeDeletion(keyNode,keyNodeIndex(keyNode,key));//deletes key
     }
     public int keyNodeIndex(BTreeNode keyNode,String key){
         for (int i = 0; i < keyNode.numOfKeys ; i++) {
@@ -189,7 +306,7 @@ public class BTreeNode {
 
         for (int i = 0; i <=father.numOfKeys ; i++) {
             if(father.children[i].equals(middleSon)& i!=0)
-                return children[i];
+                return children[i-1];
         }
         return null;
     }
